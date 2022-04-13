@@ -22,19 +22,7 @@ const requestListener = async (req, res) => {
   req.on('data', (chunk) => {
     body += chunk;
   });
-  if (req.url === '/') {
-    res.writeHead(200, headers);
-    res.write(
-      JSON.stringify({
-        status: 'success',
-        message: '首頁',
-      }),
-    );
-    res.end();
-  } else if (req.method === 'OPTIONS') {
-    res.writeHead(200, headers);
-    res.end();
-  } else if (req.url === '/todos' && req.method === 'GET') {
+  if (req.url === '/todos' && req.method === 'GET') {
     const data = await Todo.find();
     res.writeHead(200, headers);
     res.write(
@@ -85,7 +73,7 @@ const requestListener = async (req, res) => {
         errorHandler(res);
       }
     });
-  }  else if (req.url === '/todos' && req.method === 'DELETE') {
+  } else if (req.url === '/todos' && req.method === 'DELETE') {
     await Todo.deleteMany({});
     res.writeHead(200, headers);
     res.write(
@@ -116,7 +104,10 @@ const requestListener = async (req, res) => {
       );
     }
     res.end();
-  }else {
+  } else if (req.method === 'OPTIONS') {
+    res.writeHead(200, headers);
+    res.end();
+  } else {
     res.writeHead(404, headers);
     res.write(
       JSON.stringify({
