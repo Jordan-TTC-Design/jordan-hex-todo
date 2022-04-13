@@ -1,5 +1,5 @@
 {
-  "name": "hex-todo",
+  "name": "jordan-hex-todo",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -15,6 +15,6 @@
     "uuid": "^8.3.2"
   },
   "engine": {
-    "node": "16.x"
+    "node": "v16.x"
   }
 }
