@@ -19,7 +19,7 @@ const todoSchema = new mongoose.Schema(
   { versionKey: false },
 );
 // 新增一個model
-const Todo = mongoose.model('Todo', roomSchema);
+const Todo = mongoose.model('Todo', todoSchema);
 
 module.exports = Todo;
 

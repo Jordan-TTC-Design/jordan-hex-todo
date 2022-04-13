@@ -1,4 +1,5 @@
 const http = require('http');
+const Todo = require('./models/todo');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const { headers } = require('./baseHeader');
@@ -16,9 +17,7 @@ mongoose
   })
   .catch((err) => console.log(err));
 
-const todos = [];
-
-const requestListener = (req, res) => {
+const requestListener = async (req, res) => {
   let body = '';
   req.on('data', (chunk) => {
     body += chunk;
@@ -36,12 +35,13 @@ const requestListener = (req, res) => {
     res.writeHead(200, headers);
     res.end();
   } else if (req.url === '/todos' && req.method === 'GET') {
+    const data = await Todo.find();
     res.writeHead(200, headers);
     res.write(
       JSON.stringify({
         status: 'success',
         message: '成功取得資料',
-        data: todos,
+        data,
       }),
     );
     res.end();
@@ -72,23 +72,21 @@ const requestListener = (req, res) => {
       errorHandler(res);
     }
   } else if (req.url === '/todos' && req.method === 'POST') {
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
-        const title = JSON.parse(body).title;
-        if (title !== undefined) {
-          const item = { title, id: uuidv4() };
-          todos.push(item);
-          res.writeHead(200, headers);
-          res.write(
-            JSON.stringify({
-              status: 'success',
-              message: '成功新增一筆資料',
-            }),
-          );
-          res.end();
-        } else {
-          errorHandler(res);
-        }
+        const data = JSON.parse(body);
+        const newTodo = await Todo.create({
+          content: data.content,
+          completed: data.completed,
+        });
+        res.writeHead(200, headers);
+        res.write(
+          JSON.stringify({
+            status: 'success',
+            message: '成功新增一筆todo',
+          }),
+        );
+        res.end();
       } catch (error) {
         console.log(error);
         errorHandler(res);
