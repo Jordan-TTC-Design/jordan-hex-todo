@@ -45,32 +45,6 @@ const requestListener = async (req, res) => {
       }),
     );
     res.end();
-  } else if (req.url === '/todos' && req.method === 'DELETE') {
-    todos.length = 0;
-    res.writeHead(200, headers);
-    res.write(
-      JSON.stringify({
-        status: 'success',
-        message: '成功刪除全部資料',
-      }),
-    );
-    res.end();
-  } else if (req.url.startsWith('/todos/') && req.method === 'DELETE') {
-    const itemId = req.url.split('/').pop();
-    const itemIndex = todos.findIndex((item) => item.id === itemId);
-    if (itemIndex > -1) {
-      todos.splice(itemIndex, 1);
-      res.writeHead(200, headers);
-      res.write(
-        JSON.stringify({
-          status: 'success',
-          message: `成功刪除id為${itemId}的資料`,
-        }),
-      );
-      res.end();
-    } else {
-      errorHandler(res);
-    }
   } else if (req.url === '/todos' && req.method === 'POST') {
     req.on('end', async () => {
       try {
@@ -93,30 +67,56 @@ const requestListener = async (req, res) => {
       }
     });
   } else if (req.url.startsWith('/todos/') && req.method === 'PATCH') {
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
-        const itemId = req.url.split('/').pop();
-        const itemIndex = todos.findIndex((item) => item.id === itemId);
-        const title = JSON.parse(body).title;
-        if (itemIndex > -1 && title !== undefined) {
-          todos[itemIndex].title = title;
-          res.writeHead(200, headers);
-          res.write(
-            JSON.stringify({
-              status: 'success',
-              message: `成功修改id為${itemId}的資料`,
-            }),
-          );
-          res.end();
-        } else {
-          errorHandler(res);
-        }
+        const id = req.url.split('/').pop();
+        const data = JSON.parse(body);
+        const targetTodo = await Todo.findByIdAndUpdate(id, data);
+        res.writeHead(200, headers);
+        res.write(
+          JSON.stringify({
+            status: 'success',
+            message: `ID為${id}資料更新成功`,
+          }),
+        );
+        res.end();
       } catch (error) {
         console.log(error);
         errorHandler(res);
       }
     });
-  } else {
+  }  else if (req.url === '/todos' && req.method === 'DELETE') {
+    await Todo.deleteMany({});
+    res.writeHead(200, headers);
+    res.write(
+      JSON.stringify({
+        status: 'success',
+        message: '全部資料刪除成功',
+      }),
+    );
+    res.end();
+  } else if (req.url.startsWith('/todos/') && req.method === 'DELETE') {
+    const id = req.url.split('/').pop();
+    const deleteResult = await Todo.findByIdAndDelete(id);
+    if (deleteResult !== null) {
+      res.writeHead(200, headers);
+      res.write(
+        JSON.stringify({
+          status: 'success',
+          message: `ID為${id}資料刪除成功`,
+        }),
+      );
+    } else {
+      res.writeHead(400, headers);
+      res.write(
+        JSON.stringify({
+          status: 'false',
+          message: `找不到ID為${id}的資料`,
+        }),
+      );
+    }
+    res.end();
+  }else {
     res.writeHead(404, headers);
     res.write(
       JSON.stringify({
