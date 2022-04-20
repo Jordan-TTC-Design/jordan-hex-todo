@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const { headers } = require('./baseHeader');
 const errorHandler = require('./errorHandler');
+const { resHandler, resDataHandler } = require('./resHandler');
 
 dotenv.config({ path: './config.env' });
 const DB = process.env.DATABASE.replace(
@@ -24,34 +25,19 @@ const requestListener = async (req, res) => {
   });
   if (req.url === '/todos' && req.method === 'GET') {
     const data = await Todo.find();
-    res.writeHead(200, headers);
-    res.write(
-      JSON.stringify({
-        status: 'success',
-        message: '成功取得資料',
-        data,
-      }),
-    );
-    res.end();
+    resDataHandler(200, res, '成功取得所有資料', data);
   } else if (req.url === '/todos' && req.method === 'POST') {
     req.on('end', async () => {
       try {
         const data = JSON.parse(body);
-        const newTodo = await Todo.create({
+        await Todo.create({
           content: data.content,
           completed: data.completed,
         });
-        res.writeHead(200, headers);
-        res.write(
-          JSON.stringify({
-            status: 'success',
-            message: '成功新增一筆todo',
-          }),
-        );
-        res.end();
+        resHandler(200,res,'成功新增一筆資料');
       } catch (error) {
         console.log(error);
-        errorHandler(res);
+        errorHandler(400, res, error.message);
       }
     });
   } else if (req.url.startsWith('/todos/') && req.method === 'PATCH') {
@@ -60,63 +46,29 @@ const requestListener = async (req, res) => {
         const id = req.url.split('/').pop();
         const data = JSON.parse(body);
         const targetTodo = await Todo.findByIdAndUpdate(id, data);
-        res.writeHead(200, headers);
-        res.write(
-          JSON.stringify({
-            status: 'success',
-            message: `ID為${id}資料更新成功`,
-          }),
-        );
-        res.end();
+        resHandler(200,res,`ID為${id}資料更新成功`);
       } catch (error) {
         console.log(error);
-        errorHandler(res);
+        errorHandler(400, res, error.message);
       }
     });
   } else if (req.url === '/todos' && req.method === 'DELETE') {
     await Todo.deleteMany({});
-    res.writeHead(200, headers);
-    res.write(
-      JSON.stringify({
-        status: 'success',
-        message: '全部資料刪除成功',
-      }),
-    );
-    res.end();
+    resHandler(200,res,'全部資料刪除成功');
   } else if (req.url.startsWith('/todos/') && req.method === 'DELETE') {
     const id = req.url.split('/').pop();
     const deleteResult = await Todo.findByIdAndDelete(id);
     if (deleteResult !== null) {
-      res.writeHead(200, headers);
-      res.write(
-        JSON.stringify({
-          status: 'success',
-          message: `ID為${id}資料刪除成功`,
-        }),
-      );
+      resHandler(200,res,`ID為${id}資料刪除成功`);
     } else {
-      res.writeHead(400, headers);
-      res.write(
-        JSON.stringify({
-          status: 'false',
-          message: `找不到ID為${id}的資料`,
-        }),
-      );
+      errorHandler(400, res, `找不到ID為${id}的資料`);
     }
-    res.end();
   } else if (req.method === 'OPTIONS') {
     res.writeHead(200, headers);
     res.end();
   } else {
-    res.writeHead(404, headers);
-    res.write(
-      JSON.stringify({
-        status: 'false',
-        message: '找不到頁面',
-      }),
-    );
-    res.end();
+    errorHandler(404, res, '找不到頁面');
   }
 };
 const server = http.createServer(requestListener);
-server.listen(process.env.PORT || 3005);
+server.listen(process.env.PORT || 8080);
